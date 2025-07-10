@@ -9,8 +9,11 @@ RUN pip install --no-cache-dir numpy soundfile librosa tritonclient[all]
 WORKDIR /app
 COPY . /app
 
+COPY ./requirements.txt /requirements.txt
+RUN pip install -r /requirements.txt
+
 # Copy model repository vào container
-COPY ../models /models
+COPY ./models /models
 
 # Mặc định chạy Triton Server
 CMD ["tritonserver", "--model-repository=/models"]

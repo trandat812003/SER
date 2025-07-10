@@ -1,6 +1,7 @@
 name: "ensemble_ser"
 platform: "ensemble"
 max_batch_size: 0
+
 input [
   {
     name: "AUDIO_RAW"
@@ -8,13 +9,15 @@ input [
     dims: [ -1 ]
   }
 ]
+
 output [
   {
     name: "output"
     data_type: TYPE_FP32
-    dims: [ 1, 2 ]
+    dims: [ -1, 2 ]
   }
 ]
+
 ensemble_scheduling {
   step [
     {
@@ -30,7 +33,7 @@ ensemble_scheduling {
       }
     },
     {
-      model_name: "wav2vec2"
+      model_name: "hubert"
       model_version: 1
       input_map {
         key: "input_values"
