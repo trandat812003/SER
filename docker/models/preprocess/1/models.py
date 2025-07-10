@@ -23,41 +23,32 @@ class TritonPythonModel:
           * model_version: Model version
           * model_name: Model name
         """
-        print('Initialized...')
+        self.sample_rate = 16000
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        MODEL_PRETRAIN = "facebook/wav2vec2-base-960h"
+
+        self.processor = Wav2Vec2Processor.from_pretrained(MODEL_PRETRAIN)
+        self.model = Wav2Vec2Model.from_pretrained(MODEL_PRETRAIN).to(self.device)
+
+        model_config = json.loads(args['model_config'])
+        output_config = pb_utils.get_output_config_by_name(model_config, "output")
+        self.output_type = pb_utils.triton_string_to_numpy(output_config['data_type'])
 
     def execute(self, requests):
-        """`execute` must be implemented in every Python model. `execute`
-        function receives a list of pb_utils.InferenceRequest as the only
-        argument. This function is called when an inference is requested
-        for this model.
-
-        Parameters
-        ----------
-        requests : list
-          A list of pb_utils.InferenceRequest
-
-        Returns
-        -------
-        list
-          A list of pb_utils.InferenceResponse. The length of this list must
-          be the same as `requests`
-        """
-
         responses = []
-
-        # Every Python backend must iterate through list of requests and create
-        # an instance of pb_utils.InferenceResponse class for each of them.
-        # Reusing the same pb_utils.InferenceResponse object for multiple
-        # requests may result in segmentation faults. You should avoid storing
-        # any of the input Tensors in the class attributes as they will be
-        # overridden in subsequent inference requests. You can make a copy of
-        # the underlying NumPy array and store it if it is required.
         for request in requests:
-            # Perform inference on the request and append it to responses
-            # list...
-
-        # You must return a list of pb_utils.InferenceResponse. Length
-        # of this list must match the length of `requests` list.
+            # Nhận input là bytes (raw audio)
+            audio_bytes = pb_utils.get_input_tensor_by_name(request, "AUDIO_RAW").as_numpy()[0]
+            audio = np.frombuffer(audio_bytes, dtype=np.float32)
+            # Nếu cần decode từ wav, dùng soundfile hoặc librosa
+            # audio, sr = sf.read(io.BytesIO(audio_bytes))
+            # Nếu cần resample:
+            audio = librosa.resample(audio, orig_sr, self.sample_rate)
+            # Chuẩn hóa shape (1, length)
+            audio = np.expand_dims(audio, 0).astype(np.float32)
+            out_tensor = pb_utils.Tensor("input_values", audio)
+            responses.append(pb_utils.InferenceResponse(output_tensors=[out_tensor]))
         return responses
 
     def finalize(self):

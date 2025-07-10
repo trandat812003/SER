@@ -2,6 +2,8 @@
 __pycache__/
 *.py[codz]
 *$py.class
+*.onnx
+*.wav
 
 # C extensions
 *.so
