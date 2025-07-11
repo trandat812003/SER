@@ -107,7 +107,7 @@ class ModelTester:
             audio_path = row['audio_path']
             true_label = row['emotion']
 
-            breakpoint()
+            # breakpoint()
             
             pred = self.predict_audio(model, audio_path, feature_extractor)
             if pred is not None:
