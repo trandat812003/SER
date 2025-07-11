@@ -20,6 +20,8 @@ from models.wav2vec2_xlsr import SERModelWav2Vec2
 from models.hubert_xlsr import SERModelHuBERT
 from models.wav2vec2 import SERModel
 
+from util.mapping import mapping_pleasure_output, mapping_arousal_output, detect_unsatisfied
+
 
 class ModelTester:
     def __init__(self, device=None):
@@ -64,7 +66,7 @@ class ModelTester:
     def load_audio(self, audio_path, feature_extractor):
         """Load và preprocess audio"""
         try:
-            audio, sr = sf.read(audio_path)
+            audio, sr = sf.read("/media/admin123/DataVoice/SER/audio/audio_2500/"+audio_path)
             if sr != 16000:
                 audio = librosa.resample(y=audio, orig_sr=sr, target_sr=16000)
             
@@ -104,6 +106,8 @@ class ModelTester:
         for idx, row in test_data.iterrows():
             audio_path = row['audio_path']
             true_label = row['emotion']
+
+            breakpoint()
             
             pred = self.predict_audio(model, audio_path, feature_extractor)
             if pred is not None:
@@ -137,18 +141,11 @@ class ModelTester:
         """Tìm checkpoint tốt nhất"""
         print(f"\nTìm checkpoint tốt nhất cho {model_name}...")
         
-        # Tìm tất cả checkpoint files
-        checkpoint_patterns = [
-            "*.pth",
-            "*.pt", 
-            "checkpoint_*.pth",
-            "model_*.pth",
-            "*best*.pth"
-        ]
-        
+        # Tìm tất cả checkpoint files (không cần pattern, lấy hết file .pth, .pt)
         checkpoints = []
-        for pattern in checkpoint_patterns:
-            checkpoints.extend(glob.glob(os.path.join(checkpoint_dir, pattern)))
+        for file in os.listdir(checkpoint_dir):
+            if file.endswith('.pth') or file.endswith('.pt'):
+                checkpoints.append(os.path.join(checkpoint_dir, file))
         
         if not checkpoints:
             print(f"Không tìm thấy checkpoint nào trong {checkpoint_dir}")
@@ -186,8 +183,10 @@ class ModelTester:
         print(f"\n{'='*60}")
         print("KẾT QUẢ TỐT NHẤT:")
         print(f"{'='*60}")
-        print(f"Best Accuracy: {best_acc['checkpoint_name']} - {best_acc['accuracy']:.4f}")
-        print(f"Best F1 Score: {best_f1['checkpoint_name']} - {best_f1['f1_score']:.4f}")
+        print(f"Checkpoint tốt nhất theo Accuracy: {best_acc['checkpoint_name']}")
+        print(f"  Accuracy: {best_acc['accuracy']:.4f}")
+        print(f"Checkpoint tốt nhất theo F1 Score: {best_f1['checkpoint_name']}")
+        print(f"  F1 Score: {best_f1['f1_score']:.4f}")
         
         # In tất cả kết quả
         print(f"\n{'='*60}")
@@ -210,11 +209,17 @@ def load_test_data(data_path):
     print(f"Loaded {len(df)} samples from {data_path}")
     
     # Kiểm tra columns
-    required_cols = ['audio_path', 'emotion']
+    required_cols = ['audio', 'pleasure', 'arousal']
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
         print(f"Thiếu columns: {missing_cols}")
         return None
+
+    # Mapping thành nhãn cuối cùng (ví dụ dùng mapping từ util/mapping.py)
+    df['pleasure_output'] = df['pleasure'].apply(mapping_pleasure_output)
+    df['arousal_output'] = df['arousal'].apply(mapping_arousal_output)
+    df['emotion'] = df.apply(lambda row: detect_unsatisfied(row['pleasure_output'], row['arousal_output']), axis=1)
+    df = df.rename(columns={'audio': 'audio_path'})
     
     return df
 

@@ -5,12 +5,11 @@ FROM nvcr.io/nvidia/tritonserver:25.06-py3
 RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir numpy soundfile librosa tritonclient[all]
 
-# Copy code service vào container
-WORKDIR /app
-COPY . /app
-
 COPY ./requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
+
+# Copy code service vào container
+WORKDIR /app
 
 # Copy model repository vào container
 COPY ./models /models

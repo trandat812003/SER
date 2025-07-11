@@ -1,5 +1,6 @@
 import torch
 import json
+import numpy as np
 from transformers import Wav2Vec2FeatureExtractor
 
 import triton_python_backend_utils as pb_utils
@@ -37,7 +38,6 @@ class TritonPythonModel:
             do_normalize=True,
             return_attention_mask=False,
         )
-        print(args)
         model_config = json.loads(args['model_config'])
         output_config = pb_utils.get_output_config_by_name(model_config, "input_values")
         self.output_type = pb_utils.triton_string_to_numpy(output_config['data_type'])
@@ -46,15 +46,16 @@ class TritonPythonModel:
         responses = []
         for request in requests:
             # Nhận input là bytes (raw audio)
-            audio_bytes = pb_utils.get_input_tensor_by_name(request, "AUDIO_RAW").as_numpy()[0]
-            audio = np.frombuffer(audio_bytes, dtype=np.float32)
+            audio_bytes = pb_utils.get_input_tensor_by_name(request, "AUDIO_RAW").as_numpy()
+            # audio = np.frombuffer(audio_bytes, dtype=np.float32)
             # Nếu cần decode từ wav, dùng soundfile hoặc librosa
             # audio, sr = sf.read(io.BytesIO(audio_bytes))
             # Nếu cần resample:
             # audio = librosa.resample(audio, orig_sr, self.sample_rate)
             # Chuẩn hóa shape (1, length)
-            audio = np.expand_dims(audio, 0).astype(np.float32)
-            audio = self.feature_extractor(audio, sampling_rate=16000, return_tensors="pt")["input_values"]
+            # audio = np.expand_dims(audio, 0).astype(np.float32)
+            audio = self.processor(audio_bytes, sampling_rate=16000, return_tensors="pt")["input_values"]
+            audio = audio.cpu().detach().numpy()
             out_tensor = pb_utils.Tensor("input_values", audio)
             responses.append(pb_utils.InferenceResponse(output_tensors=[out_tensor]))
         return responses
