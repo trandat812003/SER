@@ -30,7 +30,7 @@ class VoiceActivityDetector:
         wav, orig_sr = torchaudio.load(wav_path)
         if orig_sr != sr:
             wav = torchaudio.functional.resample(wav, orig_sr, sr)
-        wav = wav.mean(dim=0).numpy()  # mono
+        wav = wav.mean(dim=0).numpy() 
         return wav, sr
 
     def detect_voice_activity(self, audio, sr=16000):

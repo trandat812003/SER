@@ -18,3 +18,27 @@ python3 test_models.py --model_name hubert_xlsr --checkpoint_dir /media/admin123
 python3 test_models.py --model_name wav2vec_xlsr --checkpoint_dir /media/admin123/DataVoice/checkpoints/hubert --test_data /media/admin123/DataVoice/valid.csv
 ```
 
+ngrok config add-authtoken 2sqQXDekU28hLOzNjBQTT991GcQ_2NGz72esojbHSUVwM3RpU
+
+curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
+  | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
+  && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
+  | tee /etc/apt/sources.list.d/ngrok.list \
+  && apt update \
+  && apt install ngrok
+
+```
+/usr/src/tensorrt/bin/trtexec
+```
+
+/opt/tritonserver/bin/tritonserver --model-repository=
+
+```
+/usr/src/tensorrt/bin/trtexec \
+  --onnx=/home/jovyan/datnt/models/hubert_onnx/1/model.onnx \
+  --minShapes=input_values:1x16000 \
+  --optShapes=input_values:4x16000 \
+  --maxShapes=input_values:32x1600000 \
+  --fp32 \
+  --saveEngine=/home/jovyan/datnt/models/hubert/1/model.plan
+```

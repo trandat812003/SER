@@ -41,15 +41,38 @@ class EmotionDataset(Dataset):
             self.audio_files = []
             self.labels = []
 
-            for _, row in self.df.iterrows():
-                file_path = os.path.join(data_dir, row["audio"])
-                if os.path.exists(file_path):
-                    self.audio_files.append(self.preprocess_audio(file_path))
-
-                    p_label = mapping_pleasure_output(row["pleasure"])
-                    a_label = mapping_arousal_output(row["arousal"])
-                    label = detect_unsatisfied(p_label, a_label)
-                    self.labels.append(label)
+            if csv_file.endswith(".csv"):
+                self.df = pd.read_csv(csv_file)
+        
+                for _, row in self.df.iterrows():
+                    file_path = os.path.join(data_dir, row["audio"])
+                    if os.path.exists(file_path):
+                        self.audio_files.append(self.preprocess_audio(file_path))
+        
+                        p_label = mapping_pleasure_output(row["pleasure"])
+                        a_label = mapping_arousal_output(row["arousal"])
+                        label = detect_unsatisfied(p_label, a_label)
+                        self.labels.append(label)
+        
+            elif csv_file.endswith(".txt"):
+                self.df = pd.read_csv(csv_file, sep="\t", header=None, names=["filename", "label"])
+        
+                for _, row in self.df.iterrows():
+                    file_path = os.path.join(data_dir, row["filename"])
+                    if os.path.exists(file_path):
+                        self.audio_files.append(self.preprocess_audio(file_path))
+        
+                        # Convert label: negative -> 1, neutral -> 0
+                        if row["label"].strip().lower() == "negative":
+                            label = 1
+                        elif row["label"].strip().lower() == "neutral":
+                            label = 0
+                        else:
+                            label = -1  # hoặc raise error tùy use case
+        
+                        self.labels.append(label)
+            else:
+                raise ValueError("Unsupported file type. Please provide .csv or .txt file.")
         else:
             raise ValueError("CSV file not found")
 
@@ -59,7 +82,7 @@ class EmotionDataset(Dataset):
 
             target_length = self.sr * self.max_length
             if len(audio) > target_length:
-                audio = audio[:target_length]
+                audio_tensor = audio[:target_length]
             else:
                 padding = target_length - len(audio)
                 audio_tensor = np.pad(audio, (0, padding), "constant")
@@ -84,7 +107,7 @@ class EmotionDataset(Dataset):
         else:
             padding = self.sr * self.max_length - audio_tensor.shape[1]
             audio_tensor = torch.cat(
-                [audio_tensor, torch.zeros((audio_tensor.shape[0], padding))],
+                [audio_tensor, torch.zeros((audio_tensor.shape[0], padding), device=audio_tensor.device)],
                 dim=1
             )
         label = self.labels[idx]
@@ -124,8 +147,8 @@ def create_dataloader(
 
 
 if __name__ == "__main__":
-    data_dir = "/media/admin123/DataVoice/SER/audio/audio_2500"
-    csv_file = "/media/admin123/DataVoice/train.csv"
+    data_dir = "/home/jovyan/datnt/dataset3/wav"
+    csv_file = "/home/jovyan/datnt/dataset3/ser.txt"
 
     dataloader, dataset = create_dataloader(
         data_dir=data_dir,

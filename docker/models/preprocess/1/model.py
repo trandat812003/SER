@@ -44,19 +44,20 @@ class TritonPythonModel:
 
     def execute(self, requests):
         responses = []
+        print(f"Số lượng request trong batch: {len(requests)}")
+        # Nếu dynamic batching, mỗi request là 1 sample trong batch
+        # Ghép tất cả input thành 1 mảng batch
+        batch_audio = []
         for request in requests:
-            # Nhận input là bytes (raw audio)
             audio_bytes = pb_utils.get_input_tensor_by_name(request, "AUDIO_RAW").as_numpy()
-            # audio = np.frombuffer(audio_bytes, dtype=np.float32)
-            # Nếu cần decode từ wav, dùng soundfile hoặc librosa
-            # audio, sr = sf.read(io.BytesIO(audio_bytes))
-            # Nếu cần resample:
-            # audio = librosa.resample(audio, orig_sr, self.sample_rate)
-            # Chuẩn hóa shape (1, length)
-            # audio = np.expand_dims(audio, 0).astype(np.float32)
-            audio = self.processor(audio_bytes, sampling_rate=16000, return_tensors="pt")["input_values"]
-            audio = audio.cpu().detach().numpy()
-            out_tensor = pb_utils.Tensor("input_values", audio)
+            batch_audio.append(audio_bytes)
+        batch_audio = np.concatenate(batch_audio, axis=0)  # shape: (batch, length)
+        # Xử lý batch với processor
+        audio = self.processor(batch_audio, sampling_rate=16000, return_tensors="pt")['input_values']
+        audio = audio.cpu().detach().numpy()  # shape: (batch, length)
+        # Trả về batch output cho từng request
+        for i in range(len(requests)):
+            out_tensor = pb_utils.Tensor("input_values", audio[i:i+1])  # giữ shape (1, length)
             responses.append(pb_utils.InferenceResponse(output_tensors=[out_tensor]))
         return responses
 

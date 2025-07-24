@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Script test để đánh giá các models và tìm checkpoint có accuracy và F1 score cao nhất
-"""
 
 import torch
 import torch.nn as nn
@@ -208,7 +205,6 @@ def load_test_data(data_path):
     df = pd.read_csv(data_path)
     print(f"Loaded {len(df)} samples from {data_path}")
     
-    # Kiểm tra columns
     required_cols = ['audio', 'pleasure', 'arousal']
     missing_cols = [col for col in required_cols if col not in df.columns]
     if missing_cols:
