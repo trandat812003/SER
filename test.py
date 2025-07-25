@@ -9,7 +9,7 @@ import tritonclient.http as httpclient
 
 # ─── Cấu hình ─────────────────────────────────────────────────────
 TRITON_URL = "10008b0d9592.ngrok-free.app"
-MODEL = "hubert_onnx"
+MODEL = "hubert"
 SAMPLE_RATE = 16000
 
 processor = Wav2Vec2FeatureExtractor(

@@ -31,7 +31,9 @@ curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
 /usr/src/tensorrt/bin/trtexec
 ```
 
-/opt/tritonserver/bin/tritonserver --model-repository=
+```
+/usr/src/tensorrt/bin/trtexec --onnx=/home/jovyan/datnt/models/hubert_onnx/1/model.onnx --minShapes=input_values:1x1000 --optShapes=input_values:4x16000 --maxShapes=input_values:4x1600000 --saveEngine=/home/jovyan/datnt/models/hubert/1/model.plan
+```
 
 ```
 /usr/src/tensorrt/bin/trtexec \

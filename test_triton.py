@@ -16,22 +16,25 @@ processor = Wav2Vec2FeatureExtractor(
     return_attention_mask=False
 )
 
-async def infer_one(client, np_audio):
+async def infer_one(client, np_audio, file_name):
     infer_input = InferInput("input_values", np_audio.shape, "FP32")
     infer_input.set_data_from_numpy(np_audio)
 
     infer_output = InferRequestedOutput("output")
 
-    result = await client.infer(
-        model_name=MODEL,
-        inputs=[infer_input],
-        model_version="",
-        outputs=[infer_output]
-    )
-
-    output_array = result.as_numpy("output")
-    print("Output numpy:", output_array)
-    return result
+    try:
+        result = await client.infer(
+            model_name=MODEL,
+            inputs=[infer_input],
+            model_version="",
+            outputs=[infer_output]
+        )
+        output_array = result.as_numpy("output")
+        print(f"{file_name}: {output_array}")
+        return result
+    except Exception as e:
+        print(f"❌ Lỗi file {file_name}: {e}")
+        return None
 
 async def main():
     audio_files = [f for f in os.listdir(VAD_DIR) if f.endswith('.wav')]
@@ -46,7 +49,7 @@ async def main():
             inputs = processor(audio[0], sampling_rate=sr, return_tensors="pt")
             input_values = inputs["input_values"].numpy().astype('float32')
             total_audio_sec += input_values.shape[1] / SAMPLE_RATE
-            tasks.append(infer_one(client, input_values))
+            tasks.append(infer_one(client, input_values, wav))
 
         start = time.time()
         results = await asyncio.gather(*tasks)
