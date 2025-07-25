@@ -29,6 +29,8 @@ curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
 
 ```
 /usr/src/tensorrt/bin/trtexec
+
+CUDA_VISIBLE_DEVICES=5 /opt/tritonserver/bin/tritonserver --model-repository=/home/jovyan/datnt/models/
 ```
 
 ```
