@@ -4,7 +4,7 @@ from transformers import Wav2Vec2FeatureExtractor
 from tritonclient.http import InferInput, InferRequestedOutput
 import tritonclient.http.aio as aioclient
 
-TRITON_URL = "10008b0d9592.ngrok-free.app"
+TRITON_URL = "4d78b93b9eae.ngrok-free.app"
 MODEL = "hubert"
 SAMPLE_RATE = 16000
 VAD_DIR = "vad_output_silero"
