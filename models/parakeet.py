@@ -4,15 +4,14 @@ import nemo.collections.asr as nemo_asr
 asr_model = nemo_asr.models.ASRModel.from_pretrained(model_name="nvidia/parakeet-tdt-0.6b-v2")
 
 # Audio path
-audio_path = '/home/admin123/Documents/vnpt/demo_audio_1_3min.wav'
+audio_path = '/media/admin123/DataVoice/aaa/demo_1p.wav'
 
 # Transcribe without timestamps (just plain text)
-output = asr_model.transcribe([audio_path])
-print("Transcript:", output[0].text)
+
 
 # Transcribe with timestamps
 output = asr_model.transcribe([audio_path], timestamps=True)
-
+print("Transcript:", output[0].text)
 # Get timestamps
 segment_timestamps = output[0].timestamp.get('segment', [])
 word_timestamps = output[0].timestamp.get('word', [])

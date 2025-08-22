@@ -49,10 +49,16 @@ CUDA_VISIBLE_DEVICES=5 /opt/tritonserver/bin/tritonserver --model-repository=/ho
 ```
 
 
-./build/bin/sherpa-onnx-offline \
-  --encoder=./parakeet/encoder.int8.onnx \
-  --decoder=./parakeet/decoder.onnx \
-  --joiner=./parakeet/joiner.onnx \
-  --tokens=./parakeet/tokens.txt \
-  --model-type=nemo_transducer \
-  ./parakeet/test_wavs/demo_audio.wav
+/usr/src/tensorrt/bin/trtexec \
+  --onnx=/home/jovyan/datnt/ASR/encoder-model.onnx \
+  --minShapes=audio_signal:1x128x1000,length:1 \
+  --optShapes=audio_signal:1x128x12000,length:1 \
+  --maxShapes=audio_signal:1x128x20000,length:1 \
+  --saveEngine=/home/jovyan/datnt/ASR/encoder-model.plan 
+
+/usr/src/tensorrt/bin/trtexec \
+  --onnx=/home/jovyan/datnt/ASR/decoder_joint-model.onnx \
+  --minShapes=encoder_outputs:1x1024x1000,targets:1x1,target_length:1,input_states_1:2x1x640,input_states_2:2x1x640 \
+  --optShapes=encoder_outputs:1x1024x2500,targets:1x1,target_length:1,input_states_1:2x1x640,input_states_2:2x1x640 \
+  --maxShapes=encoder_outputs:1x1024x2500,targets:1x1,target_length:1,input_states_1:2x1x640,input_states_2:2x1x640 \
+  --saveEngine=/home/jovyan/datnt/ASR/decoder_joint-model.plan 
